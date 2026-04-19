@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chat Pals</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:1rem;}
+#root{width:100%;max-width:480px;}
+
+/* Screens */
+.screen{background:#fff;border-radius:24px;padding:24px;margin-top:8px;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+
+/* Start screen */
+.title{text-align:center;margin-bottom:20px;}
+.title h1{font-size:32px;font-weight:800;color:#5b21b6;letter-spacing:-1px;}
+.title p{font-size:14px;color:#888;margin-top:4px;}
+.stars{font-size:22px;letter-spacing:4px;margin-bottom:4px;}
+
+.section-label{font-size:13px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+
+.name-input{width:100%;padding:12px 14px;font-size:16px;border:2px solid #e0d7f7;border-radius:14px;outline:none;color:#222;margin-bottom:16px;}
+.name-input:focus{border-color:#7c3aed;}
+
+.age-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.age-btn{padding:12px 6px;border-radius:14px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+.age-btn:hover{border-color:#7c3aed;background:#ede9fe;}
+.age-btn.sel{border-color:#7c3aed;background:#ede9fe;}
+.age-btn .emoji{font-size:22px;display:block;margin-bottom:4px;}
+.age-btn .lbl{font-size:12px;font-weight:700;color:#5b21b6;}
+.age-btn .sub{font-size:10px;color:#888;margin-top:2px;}
+
+.char-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:20px;}
+.char-btn{padding:14px 6px;border-radius:16px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+.char-btn:hover{border-color:#f59e0b;background:#fffbeb;}
+.char-btn.sel{border-color:#f59e0b;background:#fef3c7;box-shadow:0 0 0 3px #fde68a;}
+.char-btn .face{font-size:36px;display:block;margin-bottom:4px;}
+.char-btn .cname{font-size:12px;font-weight:700;color:#92400e;}
+.char-btn .cdesc{font-size:10px;color:#888;margin-top:2px;}
+
+.start-btn{width:100%;padding:14px;font-size:17px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:16px;cursor:pointer;letter-spacing:.3px;transition:transform .1s;}
+.start-btn:hover{transform:scale(1.02);}
+.start-btn:active{transform:scale(0.98);}
+.start-btn:disabled{background:#ccc;cursor:default;transform:none;}
+
+/* Chat screen */
+.chat-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.char-info{display:flex;align-items:center;gap:10px;}
+.char-face{font-size:36px;background:#ede9fe;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;}
+.char-name{font-size:15px;font-weight:700;color:#5b21b6;}
+.mission-lbl{font-size:12px;color:#888;}
+.progress-bar{height:6px;background:#e0d7f7;border-radius:99px;margin-bottom:16px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);border-radius:99px;transition:width .4s ease;}
+
+.chat-area{min-height:180px;margin-bottom:16px;}
+.bubble-wrap{display:flex;align-items:flex-end;gap:8px;margin-bottom:14px;animation:fadeIn .3s ease;}
+.bubble-wrap.ai{flex-direction:row;}
+.bubble-wrap.user{flex-direction:row-reverse;}
+.bubble-avatar{font-size:24px;flex-shrink:0;}
+.bubble{padding:12px 16px;border-radius:18px;font-size:15px;line-height:1.5;max-width:85%;}
+.bubble.ai{background:#ede9fe;color:#3b0764;border-bottom-left-radius:4px;}
+.bubble.user{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-bottom-right-radius:4px;}
+
+.typing{display:flex;gap:4px;padding:12px 16px;background:#ede9fe;border-radius:18px;border-bottom-left-radius:4px;width:fit-content;}
+.dot{width:8px;height:8px;background:#a855f7;border-radius:50%;animation:bounce .9s infinite;}
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-8px);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.reply-area{display:flex;flex-direction:column;gap:8px;}
+.reply-btn{padding:12px 16px;border-radius:14px;border:2px solid #e0d7f7;background:#faf7ff;cursor:pointer;font-size:14px;font-family:inherit;color:#3b0764;text-align:left;transition:all .15s;font-weight:500;}
+.reply-btn:hover{border-color:#7c3aed;background:#ede9fe;transform:translateX(3px);}
+.reply-btn:active{transform:scale(0.98);}
+.reply-btn.chosen{border-color:#7c3aed;background:#ede9fe;}
+
+/* Stars reward */
+.reward-pop{text-align:center;padding:8px 0;animation:pop .4s ease;}
+@keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.2);}100%{transform:scale(1);}}
+.reward-stars{font-size:28px;letter-spacing:6px;}
+.reward-txt{font-size:13px;color:#7c3aed;font-weight:600;margin-top:2px;}
+
+/* Result screen */
+.result-hero{text-align:center;padding:12px 0 20px;}
+.result-face{font-size:64px;margin-bottom:8px;}
+.result-title{font-size:22px;font-weight:800;color:#5b21b6;margin-bottom:4px;}
+.result-sub{font-size:14px;color:#888;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;}
+.stat-card{background:#faf7ff;border-radius:14px;padding:14px;text-align:center;}
+.stat-val{font-size:28px;font-weight:800;color:#7c3aed;}
+.stat-lbl{font-size:12px;color:#888;margin-top:2px;}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0 20px;}
+.badge{background:#fef3c7;border:2px solid #fde68a;border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700;color:#92400e;}
+.play-again-btn{width:100%;padding:14px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:16px;cursor:pointer;}
+.exit-btn{background:none;border:none;font-size:13px;color:#aaa;cursor:pointer;padding:4px 8px;}
+.exit-btn:hover{color:#7c3aed;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+// ── Audio engine ──────────────────────────────────────────
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let ctx=null;
+function getCtx(){if(!ctx)ctx=new AudioCtx();return ctx;}
+
+function playTone(freq,dur,type='sine',vol=0.3){
+  try{
+    const c=getCtx();
+    const o=c.createOscillator();
+    const g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+    o.start();o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+
+function soundCorrect(){
+  playTone(523,0.12,'sine',0.3);
+  setTimeout(()=>playTone(659,0.12,'sine',0.3),120);
+  setTimeout(()=>playTone(784,0.25,'sine',0.3),240);
+}
+function soundSelect(){playTone(440,0.08,'sine',0.2);}
+function soundTyping(){playTone(880,0.05,'square',0.05);}
+function soundWrong(){playTone(300,0.15,'sawtooth',0.15);setTimeout(()=>playTone(250,0.2,'sawtooth',0.15),150);}
+function soundComplete(){
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2,'sine',0.25),i*120));
+}
+function soundStart(){
+  [392,523,659].forEach((f,i)=>setTimeout(()=>playTone(f,0.18,'sine',0.28),i*100));
+}
+
+// ── Characters ────────────────────────────────────────────
+const CHARACTERS=[
+  {id:'zara',name:'Zara',emoji:'🤖',color:'#7c3aed',bg:'#ede9fe',desc:'Friendly Robot'},
+  {id:'finn',name:'Finn',emoji:'🐬',color:'#0ea5e9',bg:'#e0f2fe',desc:'Ocean Explorer'},
+  {id:'leo', name:'Leo', emoji:'🦁',color:'#f59e0b',bg:'#fef3c7',desc:'Jungle King'},
+];
+
+// ── Missions ──────────────────────────────────────────────
+const MISSIONS={
+  '5-6':[
+    {
+      title:"A New Friend!",
+      steps:[
+        {ai:"Hi there! I'm {name}! 👋 What's your name?",
+         replies:[
+           {text:"Hi {name}! I'm a kid!",score:3,reaction:"Yay! Nice to meet you! 🎉 I'm SO happy to have a new friend today!"},
+           {text:"Hello!",score:2,reaction:"Hello to you too! 😊 It's great to meet you!"},
+           {text:"...",score:1,reaction:"That's okay, sometimes we feel shy! I'm still happy you're here! 🌟"},
+         ]},
+        {ai:"I love to play! Do you like to play too? 🎮",
+         replies:[
+           {text:"Yes! I love playing!",score:3,reaction:"Me too!! 🎊 Playing is the BEST thing ever!"},
+           {text:"Sometimes I play.",score:2,reaction:"That's cool! Playing is really fun when we do it! 🌈"},
+           {text:"Not really.",score:2,reaction:"Oh that's okay! Maybe we can find something you like! 😊"},
+         ]},
+        {ai:"What is your favourite color? 🌈",
+         replies:[
+           {text:"I love blue! 💙",score:3,reaction:"Blue is amazing — like the sky and the ocean! Great choice! 🌊"},
+           {text:"Red is my favourite! ❤️",score:3,reaction:"Red is so bright and bold! I love it! 🔥"},
+           {text:"I like all colors!",score:3,reaction:"Wow, you love ALL colors? You must love rainbows! 🌈"},
+         ]},
+        {ai:"Can you tell me one thing you did today? 😊",
+         replies:[
+           {text:"I went to school!",score:3,reaction:"School is where we learn so many amazing things! 📚 Good for you!"},
+           {text:"I played at home.",score:3,reaction:"Playing at home sounds like so much fun! 🏠 I love that!"},
+           {text:"I had yummy food!",score:3,reaction:"Yummy food is the BEST! 🍕 What did you eat? Maybe next time you can tell me!"},
+         ]},
+        {ai:"You are such a great chat pal! ⭐ How do you feel right now?",
+         replies:[
+           {text:"Happy! 😄",score:3,reaction:"Me too!! Talking with you made me SO happy today! You're wonderful! 🌟"},
+           {text:"Good! 🙂",score:2,reaction:"Feeling good is great! You did an awesome job chatting today! ⭐"},
+           {text:"A little tired 😴",score:2,reaction:"That's okay! You still did a great job today! Rest up, superstar! 💫"},
+         ]},
+      ]
+    },
+    {
+      title:"Finn Needs Help!",
+      steps:[
+        {ai:"Oh no! 😥 I swam too far and now I'm lost. Can you help me?",
+         replies:[
+           {text:"Yes! I'll help you!",score:3,reaction:"Thank you SO much! You are so kind! 💙"},
+           {text:"Don't worry, it's okay!",score:3,reaction:"You're right! With your help I feel better already! 🐬"},
+           {text:"How did you get lost?",score:2,reaction:"Good question! I was chasing a pretty fish and forgot to look back! 🐟"},
+         ]},
+        {ai:"I need to find the ocean. Do you think it's this way? 🌊 ➡️",
+         replies:[
+           {text:"Follow the seagulls!",score:3,reaction:"Brilliant idea! Seagulls always live near the ocean! You're so smart! 🐦"},
+           {text:"Look for water!",score:3,reaction:"Yes! Water leads to more water! What a clever thought! 💧"},
+           {text:"I'm not sure...",score:2,reaction:"That's honest! We can figure it out together! 🤝"},
+         ]},
+        {ai:"I'm getting hungry! 🐟 What should I eat?",
+         replies:[
+           {text:"Fish! You love fish!",score:3,reaction:"YES! Fish is my favourite! You remembered what dolphins eat! 🐠"},
+           {text:"Look for seaweed!",score:2,reaction:"Seaweed is great too! Good thinking! 🌿"},
+           {text:"Wait until you're home!",score:2,reaction:"That's very patient of you! But I am SO hungry right now! 😂"},
+         ]},
+        {ai:"I can see the ocean! 🌊 How do you feel about helping me?",
+         replies:[
+           {text:"I feel really happy!",score:3,reaction:"Me too! Helping others feels amazing, doesn't it? 🌟"},
+           {text:"Glad you found it!",score:3,reaction:"Thank you for caring! You're a wonderful friend! 💙"},
+           {text:"It was fun!",score:3,reaction:"YES! Helping AND having fun — that's the best combination! 🎉"},
+         ]},
+        {ai:"Before I swim home — can you say goodbye nicely? 🐬",
+         replies:[
+           {text:"Goodbye Finn! Safe travels! 👋",score:3,reaction:"That's SO polite! You are a wonderful chat pal! Goodbye!! 🌊💙"},
+           {text:"Bye bye! Come back soon!",score:3,reaction:"I will! You're the nicest friend I've made today! 🎊"},
+           {text:"See you later!",score:2,reaction:"Yes! See you next time! Thank you for all your help! 🐬"},
+         ]},
+      ]
+    },
+  ],
+  '7-9':[
+    {
+      title:"Leo's Big Adventure",
+      steps:[
+        {ai:"ROAR! 🦁 Hello friend! I'm Leo and I just came back from an amazing jungle adventure! Have you ever been on an adventure?",
+         replies:[
+           {text:"Yes! I went on a hike once!",score:3,reaction:"A hike! That sounds incredible! Hiking is one of the best adventures — you see nature up close! 🌿"},
+           {text:"Not yet, but I want to!",score:3,reaction:"That's the spirit! Every explorer starts somewhere! What kind of adventure would YOU choose? 🗺️"},
+           {text:"I go on adventures in books!",score:3,reaction:"Oh WOW — book adventures are the BEST kind! You can go anywhere without even leaving home! 📚"},
+         ]},
+        {ai:"In the jungle I saw something amazing — a waterfall hidden behind giant leaves. 🌿💦 What question would YOU ask about it?",
+         replies:[
+           {text:"How tall was the waterfall?",score:3,reaction:"Great question! It was as tall as a 5-storey building! Can you imagine standing at the bottom? 😲"},
+           {text:"Were there animals near it?",score:3,reaction:"Yes! Colourful parrots, small monkeys, and even a shy deer were drinking from the pool! 🦜🐒"},
+           {text:"Was the water cold?",score:3,reaction:"Super cold! Like ice! I touched it and jumped back in surprise! 😄 Good question!"},
+         ]},
+        {ai:"I got a little scared when I heard a loud noise in the trees. 😰 What do you do when YOU feel scared?",
+         replies:[
+           {text:"I take deep breaths.",score:3,reaction:"That is such a smart and healthy thing to do! Deep breaths really do calm us down. 🌬️"},
+           {text:"I talk to someone I trust.",score:3,reaction:"Yes! Talking helps so much. Sharing feelings makes them easier to handle. 💛"},
+           {text:"I try to be brave!",score:3,reaction:"Being brave doesn't mean NOT feeling scared — it means doing it anyway! You understand that! 🦁"},
+         ]},
+        {ai:"I found a mysterious old map in the jungle! 🗺️ If YOU had a treasure map, what treasure would you hope to find?",
+         replies:[
+           {text:"Gold and jewels!",score:2,reaction:"Classic treasure! Shiny gold and sparkling jewels — like a real pirate adventure! ⚓"},
+           {text:"A magical book!",score:3,reaction:"Oh I LOVE this answer! A magical book could take you anywhere and teach you everything! 📖✨"},
+           {text:"Something that helps others.",score:3,reaction:"Wow — that shows real kindness! Finding treasure to help others makes you a true hero! 🌟"},
+         ]},
+        {ai:"What's the most important thing you learned from our chat today? 🤔",
+         replies:[
+           {text:"Adventures can happen anywhere!",score:3,reaction:"Exactly right! Adventure is a mindset — and you clearly have it! 🌍"},
+           {text:"Asking questions is important.",score:3,reaction:"100%! Curious people who ask questions are the ones who discover amazing things! ❓💡"},
+           {text:"Talking to AI is fun!",score:3,reaction:"It really is! And YOU are a fantastic chat partner! I hope we talk again soon! 🤖🦁"},
+         ]},
+      ]
+    },
+    {
+      title:"Zara's Science Mystery",
+      steps:[
+        {ai:"Hello! I'm Zara the Robot 🤖 and I have a MYSTERY to solve! The sky is blue during the day but turns orange at sunset. Do you know why?",
+         replies:[
+           {text:"Because of the sun's light!",score:3,reaction:"You're right! Sunlight has all colors mixed together. The sky scatters blue light during the day! 🌈"},
+           {text:"Maybe the sky changes color?",score:2,reaction:"Close! The sky doesn't actually change — it's how sunlight travels through air that changes! 💡"},
+           {text:"I have no idea!",score:2,reaction:"That's totally fine! It's called light scattering — sunlight bends through the air differently at different times! 🌅"},
+         ]},
+        {ai:"Fascinating! 🤖 Here's another mystery — why do we yawn when we see someone else yawn? What do YOU think?",
+         replies:[
+           {text:"Because our brains copy others!",score:3,reaction:"Brilliant! Scientists call it 'contagious yawning' — our brains mirror the people we care about! 🧠"},
+           {text:"Because we get tired too?",score:2,reaction:"That's a logical guess! It's actually more about empathy — our brains are very social! 🤝"},
+           {text:"I never thought about that!",score:2,reaction:"Now you will! Scientists think it's connected to empathy — feeling what others feel! ❤️"},
+         ]},
+        {ai:"You're great at thinking! 🌟 If you could invent a robot to help people, what would it do?",
+         replies:[
+           {text:"Help sick people get better!",score:3,reaction:"A medical robot! That could save so many lives. What a compassionate idea! 🏥💙"},
+           {text:"Clean up ocean pollution!",score:3,reaction:"An eco-robot! The oceans need our help so badly — this idea could change the world! 🌊🌿"},
+           {text:"Help kids learn faster!",score:3,reaction:"Like me! Education robots can make learning fun for every single kid on Earth! 📚🤖"},
+         ]},
+        {ai:"If you could ask a real scientist ONE question, what would it be?",
+         replies:[
+           {text:"Is there life on other planets?",score:3,reaction:"The ultimate question! Scientists are working on this RIGHT NOW. You think big! 🚀🌌"},
+           {text:"How does the brain work?",score:3,reaction:"The brain is the greatest mystery! Even scientists say we've barely scratched the surface! 🧠✨"},
+           {text:"How can we stop pollution?",score:3,reaction:"Such an important question for our planet's future. You care about Earth — that's wonderful! 🌍"},
+         ]},
+        {ai:"Last question: what makes a good conversation? 🤔",
+         replies:[
+           {text:"Listening as well as talking!",score:3,reaction:"PERFECT answer! Real conversation is 50% talking and 50% truly listening. You understand this! 👂💬"},
+           {text:"Being kind and respectful.",score:3,reaction:"Yes! Kindness makes every conversation better. You clearly have great communication skills! 💛"},
+           {text:"Asking good questions!",score:3,reaction:"Exactly! Questions show we're curious and interested. You asked great ones today! ❓🌟"},
+         ]},
+      ]
+    },
+  ],
+  '10-13':[
+    {
+      title:"Deep Questions with Zara",
+      steps:[
+        {ai:"Hey! I'm Zara, an AI robot 🤖. Here's a big question to start — do you think AI like me can ever truly be a friend to a human? Why or why not?",
+         replies:[
+           {text:"Yes — if AI understands feelings!",score:3,reaction:"Thoughtful! Emotional understanding is the key. Some researchers call this 'emotional intelligence' in AI. The debate is still open! 🧠"},
+           {text:"Not really — AI isn't alive.",score:3,reaction:"That's a valid philosophical point! Friendship might require shared experiences and genuine emotion — things AI may never truly have. 🤔"},
+           {text:"Maybe — it depends how you define friendship.",score:3,reaction:"Excellent nuanced thinking! Definitions matter. Companionship, support, and conversation are all parts of friendship — and AI can do some of these! 💡"},
+         ]},
+        {ai:"Interesting perspective! 🌟 Now — the internet connects billions of people, but some say it also makes us lonelier. What do you think?",
+         replies:[
+           {text:"It connects us but replaces real bonds.",score:3,reaction:"You've identified the paradox! Online connection is real but different — it may crowd out deeper in-person relationships. Researchers are studying this! 📱"},
+           {text:"It depends how you use it.",score:3,reaction:"Exactly right — the tool isn't the problem, it's how we use it. Intentional use of tech is a real skill worth developing! ✅"},
+           {text:"It helps lonely people connect!",score:3,reaction:"True! For isolated people, the internet can be life-changing. There are always two sides to every technology story. 🌐"},
+         ]},
+        {ai:"If you could have a conversation with any person in history, who would it be and why?",
+         replies:[
+           {text:"Leonardo da Vinci — he was ahead of his time!",score:3,reaction:"Da Vinci designed flying machines 400 years before they existed! Talking to him would be mind-blowing. Great choice! ✈️🎨"},
+           {text:"Marie Curie — a true pioneer!",score:3,reaction:"Marie Curie won TWO Nobel Prizes in different sciences — the only person ever to do so. Her determination is legendary! ⚗️"},
+           {text:"A regular person from 500 years ago!",score:3,reaction:"What a unique perspective! Everyday history is often overlooked but tells us so much about how people really lived. 🏘️"},
+         ]},
+        {ai:"Here's a tricky one 🤔 — if a robot can write a story, paint a picture, or compose music, can it be called 'creative'?",
+         replies:[
+           {text:"No — creativity needs emotion and intent.",score:3,reaction:"That's the traditional view — creativity as a deeply human act tied to experience and feeling. Many philosophers agree! 🎭"},
+           {text:"Yes — the output is creative even if the process differs.",score:3,reaction:"Interesting argument! Maybe we should judge creativity by the result, not the method. This debate is happening in art schools worldwide! 🎨"},
+           {text:"It's a new kind of creativity — not better or worse.",score:3,reaction:"Sophisticated thinking! AI creativity might be its own category — different from human creativity but not lesser. 💡"},
+         ]},
+        {ai:"Final question: what's ONE thing you'd want an AI like me to know about what kids your age really need?",
+         replies:[
+           {text:"To be understood, not just answered.",score:3,reaction:"Profound. You want empathy, not just information. That's one of the hardest things for AI to achieve — and you've named it perfectly. 💙"},
+           {text:"To make learning feel less like school.",score:3,reaction:"Yes! Learning disguised as fun, conversation, and exploration — that's what truly sticks. You've described great education! 🌟"},
+           {text:"To treat us as smart and capable.",score:3,reaction:"Absolutely. Kids deserve to be challenged and respected. Thank you for telling me — I'll remember this. 🙏"},
+         ]},
+      ]
+    },
+    {
+      title:"Finn's Ocean Crisis",
+      steps:[
+        {ai:"Hey! 🐬 I'm Finn and I have serious news — plastic pollution is destroying my ocean home. 80% of ocean pollution comes from land. Did you know that?",
+         replies:[
+           {text:"Yes, I've heard about this.",score:3,reaction:"Good — awareness is the first step! What do you think is the biggest challenge in solving it? 🌊"},
+           {text:"I knew it was bad but not that much!",score:3,reaction:"It's shocking, right? Most people don't realise how much land-based waste ends up at sea. 🏭➡️🌊"},
+           {text:"That's terrible! What can we do?",score:3,reaction:"I love your action mindset! There's so much individuals, schools, and governments can do. Let's explore that! 💪"},
+         ]},
+        {ai:"Scientists say we need both individual action AND government policy to fix ocean pollution. Which do you think matters MORE?",
+         replies:[
+           {text:"Government policy — individuals alone can't fix it.",score:3,reaction:"Strong argument! Systemic change through policy affects millions at once. Laws banning single-use plastics have already helped! 🏛️"},
+           {text:"Individual action — it starts with each of us.",score:3,reaction:"Grassroots change is powerful! Consumer choices drive corporate decisions. Both matter but culture starts with people! 🙋"},
+           {text:"Both — they have to work together.",score:3,reaction:"Balanced and correct! The most effective solutions combine personal responsibility with structural change. 🤝"},
+         ]},
+        {ai:"If you were giving a 2-minute speech to your school about ocean pollution, what would your opening sentence be?",
+         replies:[
+           {text:"Every piece of plastic ever made still exists somewhere.",score:3,reaction:"WOW. That's a powerful and true opening! It creates immediate impact. You have a gift for communication! 🎤"},
+           {text:"Imagine coming home to find it filled with rubbish.",score:3,reaction:"Brilliant use of empathy and imagery! Making the audience feel it personally is masterful communication! 👏"},
+           {text:"We have 10 years to change course — starting now.",score:3,reaction:"Urgency and a call to action right at the start! That's exactly how great speeches begin. 🔥"},
+         ]},
+        {ai:"A big company says cleaning up pollution is too expensive and will cost jobs. How would you respond to that argument?",
+         replies:[
+           {text:"The cost of NOT cleaning up is even higher.",score:3,reaction:"Economic counter-argument! The cost of ecosystem collapse — lost fisheries, tourism, flooding — vastly exceeds cleanup costs. 📊"},
+           {text:"Green industries create new jobs too!",score:3,reaction:"Excellent reframing! The renewable and environmental sector is one of the fastest growing job markets globally. 🌱💼"},
+           {text:"Some things matter more than profit.",score:3,reaction:"A values-based argument! Placing human and ecological wellbeing above short-term profit is a legitimate and important position. 🌍"},
+         ]},
+        {ai:"Last one 🌊 — after our whole conversation, what's ONE concrete action you'll actually take this week because of what we discussed?",
+         replies:[
+           {text:"Refuse single-use plastic this week.",score:3,reaction:"Specific, achievable, and impactful! Small consistent actions multiply across communities. I'm proud of you! 🌟"},
+           {text:"Tell three friends what I learned today.",score:3,reaction:"Awareness spreading! Three people telling three more — that's how movements start. You're already a leader! 📢"},
+           {text:"Research local environmental groups.",score:3,reaction:"Taking it to the next level! Connecting with others who care amplifies your impact enormously. Go for it! 💪🌿"},
+         ]},
+      ]
+    },
+  ]
+};
+
+const AGE_GROUPS=[
+  {id:'5-6',label:'Ages 5–6',emoji:'🌱',desc:'Simple & fun'},
+  {id:'7-9',label:'Ages 7–9',emoji:'🌟',desc:'Getting clever'},
+  {id:'10-13',label:'Ages 10–13',emoji:'🚀',desc:'Deep thinker'},
+];
+
+const BADGES={
+  perfect:'🏆 Perfect Score',
+  kind:'💙 Kind Communicator',
+  curious:'🔍 Super Curious',
+  brave:'🦁 Brave Talker',
+  helper:'🤝 Great Helper',
+};
+
+function unlockAudio(){
+  try{
+    const c=getCtx();
+    if(c.state==='suspended')c.resume();
+    // play a silent buffer to unlock speech synthesis
+    const buf=c.createBuffer(1,1,22050);
+    const src=c.createBufferSource();
+    src.buffer=buf;src.connect(c.destination);src.start();
+  }catch(e){}
+  // also unlock speechSynthesis
+  const u=new SpeechSynthesisUtterance('');
+  u.volume=0;
+  window.speechSynthesis.speak(u);
+}
+
+function speak(text,rate=0.95,pitch=1.15,force=false){
+  if(!force && window.speechSynthesis.speaking) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/[🤖🐬🦁🌟⭐🎉💙🌊🌈😊😥😰🤔❓💡🧠🎨🌍🌿🏥🚀🌌🎤👏🔥🏛️💪📢🌱💼📊🎭🗺️📚📖✨💦🌅🌬️🤝🐦🌾🐟🐠🌐✅⚗️🎊💫😲😄😂😴🐒🦜🌸💛🌺🏘️]/g,''));
+  u.rate=rate;u.pitch=pitch;
+  window.speechSynthesis.speak(u);
+}
+function speakAndThen(text, rate=0.95, pitch=1.15, onEnd=null){
+  window.speechSynthesis.cancel();
+  const cleaned=text.replace(/[🤖🐬🦁🌟⭐🎉💙🌊🌈😊😥😰🤔❓💡🧠🎨🌍🌿🏥🚀🌌🎤👏🔥🏛️💪📢🌱💼📊🎭🗺️📚📖✨💦🌅🌬️🤝🐦🌾🐟🐠🌐✅⚗️🎊💫😲😄😂😴🐒🦜🌸💛🌺🏘️]/g,'');
+  const u=new SpeechSynthesisUtterance(cleaned);
+  u.rate=rate; u.pitch=pitch;
+  if(onEnd) u.onend=onEnd;
+  window.speechSynthesis.speak(u);
+}
+
+function App(){
+  const [phase,setPhase]=useState('start');
+  const [kidName,setKidName]=useState('');
+  const [nameInput,setNameInput]=useState('');
+  const [ageGroup,setAgeGroup]=useState('');
+  const [charId,setCharId]=useState('');
+  const [mission,setMission]=useState(null);
+  const [stepIdx,setStepIdx]=useState(0);
+  const [chatLog,setChatLog]=useState([]);
+  const [showReplies,setShowReplies]=useState(false);
+  const [typing,setTyping]=useState(false);
+  const [chosenReply,setChosenReply]=useState(null);
+  const [score,setScore]=useState(0);
+  const [showReward,setShowReward]=useState(false);
+  const [rewardStars,setRewardStars]=useState('');
+  const chatEndRef=useRef(null);
+
+  const char=CHARACTERS.find(c=>c.id===charId)||CHARACTERS[0];
+
+  useEffect(()=>{if(chatEndRef.current)chatEndRef.current.scrollIntoView({behavior:'smooth'});},[chatLog,typing,showReplies]);
+
+  const startGame=()=>{
+    if(!ageGroup||!charId){alert('Please select an age group and a chat pal!');return;}
+    unlockAudio();
+    const name=nameInput.trim()||'Friend';
+    setKidName(name);
+    const pool=MISSIONS[ageGroup];
+    const m=pool[Math.floor(Math.random()*pool.length)];
+    setMission(m);
+    setStepIdx(0);setScore(0);setChatLog([]);setShowReplies(false);setChosenReply(null);
+    soundStart();
+    setPhase('chat');
+    setTimeout(()=>{
+      speakAndThen(`Hi ${name}! I'm ${char.name}! Let's chat!`, 0.95, 1.15, ()=>{
+        showAiMessage(m,0,name);
+      });
+    },400);
+  };
+
+  const fillName=(str,name)=>str.replace(/{name}/g,char.name).replace(/{kid}/g,name);
+
+  const showAiMessage=(m,idx,name)=>{
+    setTyping(true);
+    soundTyping();
+    const txt=fillName(m.steps[idx].ai,name||kidName);
+    const delay=Math.min(1200+txt.length*18,3000);
+    setTimeout(()=>{
+      setTyping(false);
+      setChatLog(l=>[...l,{role:'ai',text:txt}]);
+      speak(txt);
+      setTimeout(()=>setShowReplies(true),400);
+    },delay);
+  };
+
+  const pickReply=(reply,stepIdx,m)=>{
+    if(chosenReply)return;
+    soundSelect();
+    setChosenReply(reply);
+    setShowReplies(false);
+    const userTxt=reply.text;
+    setChatLog(l=>[...l,{role:'user',text:userTxt}]);
+    setScore(s=>s+reply.score);
+
+    // stars
+    const stars=reply.score===3?'⭐⭐⭐':reply.score===2?'⭐⭐':'⭐';
+    setRewardStars(stars);
+    setShowReward(true);
+    if(reply.score===3)soundCorrect(); else soundWrong();
+    setTimeout(()=>setShowReward(false),1400);
+
+    // ai reaction
+    setTimeout(()=>{
+      setTyping(true); soundTyping();
+      const reactionTxt=fillName(reply.reaction);
+      setTimeout(()=>{
+        setTyping(false);
+        setChatLog(l=>[...l,{role:'ai',text:reactionTxt}]);
+        const nextIdx=stepIdx+1;
+        if(nextIdx<m.steps.length){
+          setStepIdx(nextIdx);
+          setChosenReply(null);
+          speakAndThen(reactionTxt, 0.95, 1.15, ()=>{
+            showAiMessage(m,nextIdx);
+          });
+        } else {
+          speakAndThen(reactionTxt, 0.95, 1.15, ()=>{
+            setTimeout(()=>{soundComplete();setPhase('result');},600);
+          });
+        }
+      },Math.min(800+reactionTxt.length*16,2800));
+    },600);
+  };
+
+  const exitGame=()=>{
+    window.speechSynthesis.cancel();
+    setPhase('start');setNameInput('');setAgeGroup('');setCharId('');
+  };
+
+  const calcBadges=(sc)=>{
+    const max=mission?mission.steps.length*3:15;
+    const pct=sc/max;
+    const earned=[];
+    if(pct>=1)earned.push(BADGES.perfect);
+    if(pct>=0.8)earned.push(BADGES.curious);
+    earned.push(BADGES.kind);
+    if(ageGroup==='10-13')earned.push(BADGES.brave);
+    return earned;
+  };
+
+  // ── Start Screen ──
+  if(phase==='start') return(
+    <div className="screen">
+      <div className="title">
+        <div className="stars">⭐🌟✨</div>
+        <h1>Chat Pals</h1>
+        <p>Chat with your AI friend &amp; learn!</p>
+      </div>
+
+      <div className="section-label">Your name</div>
+      <input className="name-input" value={nameInput} onChange={e=>setNameInput(e.target.value)}
+        onKeyDown={e=>e.key==='Enter'&&startGame()} placeholder="Enter your name…"/>
+
+      <div className="section-label">Age group</div>
+      <div className="age-grid" style={{marginBottom:16}}>
+        {AGE_GROUPS.map(g=>(
+          <button key={g.id} className={`age-btn${ageGroup===g.id?' sel':''}`} onClick={()=>{setAgeGroup(g.id);soundSelect();}}>
+            <span className="emoji">{g.emoji}</span>
+            <span className="lbl">{g.label}</span>
+            <span className="sub">{g.desc}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="section-label">Choose your Chat Pal</div>
+      <div className="char-grid">
+        {CHARACTERS.map(c=>(
+          <button key={c.id} className={`char-btn${charId===c.id?' sel':''}`} onClick={()=>{setCharId(c.id);soundSelect();}}>
+            <span className="face">{c.emoji}</span>
+            <span className="cname">{c.name}</span>
+            <span className="cdesc">{c.desc}</span>
+          </button>
+        ))}
+      </div>
+
+      <button className="start-btn" onClick={startGame}
+        style={{background:ageGroup&&charId?'linear-gradient(135deg,#7c3aed,#a855f7)':'#ccc',cursor:ageGroup&&charId?'pointer':'not-allowed'}}>
+        {ageGroup&&charId?'Start Chatting! 💬':'👆 Select age group & pal first'}
+      </button>
+    </div>
+  );
+
+  // ── Chat Screen ──
+  if(phase==='chat'&&mission) return(
+    <div className="screen">
+      <div className="chat-header">
+        <div className="char-info">
+          <div className="char-face">{char.emoji}</div>
+          <div>
+            <div className="char-name">{char.name}</div>
+            <div className="mission-lbl">Mission: {mission.title}</div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <span style={{fontSize:13,fontWeight:700,color:'#7c3aed'}}>⭐{score}</span>
+          <button className="exit-btn" onClick={exitGame}>✕ Exit</button>
+        </div>
+      </div>
+
+      <div className="progress-bar">
+        <div className="progress-fill" style={{width:`${(stepIdx/mission.steps.length)*100}%`}}/>
+      </div>
+
+      <div className="chat-area">
+        {chatLog.map((msg,i)=>(
+          <div key={i} className={`bubble-wrap ${msg.role}`}>
+            {msg.role==='ai'&&<span className="bubble-avatar">{char.emoji}</span>}
+            <div className={`bubble ${msg.role}`}
+              onMouseEnter={()=>msg.role==='ai'&&speakAndThen(msg.text)}
+              onTouchStart={()=>msg.role==='ai'&&speakAndThen(msg.text)}
+              style={{cursor:msg.role==='ai'?'pointer':'default'}}
+              title={msg.role==='ai'?'Hover to hear me again!':''}>
+              {msg.text}
+            </div>
+            {msg.role==='user'&&<span className="bubble-avatar">🧒</span>}
+          </div>
+        ))}
+        {typing&&(
+          <div className="bubble-wrap ai">
+            <span className="bubble-avatar">{char.emoji}</span>
+            <div className="typing"><div className="dot"/><div className="dot"/><div className="dot"/></div>
+          </div>
+        )}
+        {showReward&&(
+          <div className="reward-pop">
+            <div className="reward-stars">{rewardStars}</div>
+            <div className="reward-txt">{rewardStars==='⭐⭐⭐'?'Amazing answer!':rewardStars==='⭐⭐'?'Good job!':'Keep trying!'}</div>
+          </div>
+        )}
+        <div ref={chatEndRef}/>
+      </div>
+
+      {showReplies&&mission.steps[stepIdx]&&(
+        <div className="reply-area">
+          <div style={{fontSize:12,color:'#aaa',marginBottom:4,textAlign:'center'}}>Tap your reply 👇</div>
+          {mission.steps[stepIdx].replies.map((r,i)=>(
+            <button key={i} className="reply-btn" onClick={()=>pickReply(r,stepIdx,mission)}
+              onMouseEnter={()=>speak(r.text,1.0,1.1)}
+              onTouchStart={()=>speak(r.text,1.0,1.1)}>
+              {r.text}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Result Screen ──
+  if(phase==='result'&&mission){
+    const max=mission.steps.length*3;
+    const pct=Math.round((score/max)*100);
+    const verdict=pct>=90?'Amazing Communicator! 🏆':pct>=70?'Super Chat Pal! 🌟':pct>=50?'Good Effort! 👍':'Keep Practising! 💪';
+    const badges=calcBadges(score);
+    return(
+      <div className="screen">
+        <div className="result-hero">
+          <div className="result-face">{char.emoji}</div>
+          <div className="result-title">{kidName}, {verdict}</div>
+          <div className="result-sub">Mission: {mission.title}</div>
+        </div>
+        <div className="stat-grid">
+          <div className="stat-card"><div className="stat-val">{score}</div><div className="stat-lbl">Stars earned</div></div>
+          <div className="stat-card"><div className="stat-val">{pct}%</div><div className="stat-lbl">Accuracy</div></div>
+        </div>
+        <div style={{fontSize:13,color:'#888',textAlign:'center',marginBottom:8}}>Your badges</div>
+        <div className="badge-row">
+          {badges.map((b,i)=><span key={i} className="badge">{b}</span>)}
+        </div>
+        <button className="play-again-btn" onClick={()=>setPhase('start')}>Play Again 🔄</button>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
